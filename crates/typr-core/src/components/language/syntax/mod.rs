@@ -140,3 +140,11 @@ pub enum SyntaxKind {
     ERROR,
     EOF,
 }
+
+impl SyntaxKind {
+    pub fn from_keyword(text: &str) -> Option<Self> {
+        match text {
+            _ => None,
+        }
+    }
+}

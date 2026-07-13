@@ -1,7 +1,6 @@
 pub mod argument_value;
 pub mod array_lang;
 pub mod function_lang;
-pub mod lexer;
 pub mod module_lang;
 pub mod operators;
 pub mod syntax;

@@ -283,3 +283,70 @@ fn is_ident_start(c: char) -> bool {
 fn is_ident_continue(c: char) -> bool {
     c.is_ascii_alphanumeric() || c == '_'
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn lex_all(input: &str) -> Vec<(SyntaxKind, &str)> {
+        let mut lexer = Lexer::new(input);
+        let mut tokens = Vec::new();
+        let mut offset = 0;
+
+        loop {
+            let token = lexer.next_token();
+            if token.kind == SyntaxKind::EOF {
+                break;
+            }
+
+            let text = &input[offset..offset + token.len]; // len is usize here, so no cast needed
+            tokens.push((token.kind, text));
+            offset += token.len;
+        }
+        tokens
+    }
+
+    #[test]
+    fn test_custom_operators() {
+        // Normal modulo
+        assert_eq!(lex_all("5 % 2")[2], (SyntaxKind::MODULO, "%"));
+        // Modulo 2
+        assert_eq!(lex_all("%%")[0], (SyntaxKind::MODULO2, "%%"));
+        // Custom Operator
+        assert_eq!(lex_all("%in%")[0], (SyntaxKind::CUSTOM, "%in%"));
+    }
+
+    #[test]
+    fn test_pipe_operators() {
+        assert_eq!(lex_all("|>")[0], (SyntaxKind::PIPE, "|>"));
+        assert_eq!(lex_all("|>>")[0], (SyntaxKind::PIPE2, "|>>"));
+    }
+
+    #[test]
+    fn test_numbers() {
+        assert_eq!(lex_all("42")[0], (SyntaxKind::NUMBER, "42"));
+        assert_eq!(lex_all("12.34")[0], (SyntaxKind::NUMBER, "12.34"));
+
+        // Ensure method calls on numbers don't swallow the dot
+        let tokens = lex_all("1.to_string");
+        assert_eq!(tokens[0], (SyntaxKind::NUMBER, "1"));
+        assert_eq!(tokens[1], (SyntaxKind::DOT, "."));
+        assert_eq!(tokens[2], (SyntaxKind::IDENT, "to_string"));
+    }
+
+    #[test]
+    fn test_strings() {
+        assert_eq!(lex_all("\"hello\"")[0], (SyntaxKind::STRING, "\"hello\""));
+        assert_eq!(lex_all("'world'")[0], (SyntaxKind::STRING, "'world'"));
+        assert_eq!(
+            lex_all("r#\"hello world\"#")[0],
+            (SyntaxKind::STRING, "r#\"hello world\"#")
+        );
+    }
+
+    #[test]
+    fn test_as_excl() {
+        assert_eq!(lex_all("as!")[0], (SyntaxKind::AS_EXCL, "as!"));
+        assert_eq!(lex_all("astronaut")[0], (SyntaxKind::IDENT, "astronaut"));
+    }
+}
