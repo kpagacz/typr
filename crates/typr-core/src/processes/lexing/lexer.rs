@@ -1,6 +1,6 @@
 use std::str::Chars;
 
-use crate::components::language::syntax::{SyntaxKind, Token};
+use crate::components::language::syntax::syntax_kind::{SyntaxKind, Token};
 
 pub const EOF_CHAR: char = '\0';
 

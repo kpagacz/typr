@@ -1,4 +1,6 @@
-use crate::{components::language::syntax::SyntaxKind, processes::lexing::lexed_str::LexedStr};
+use crate::{
+    components::language::syntax::syntax_kind::SyntaxKind, processes::lexing::lexed_str::LexedStr,
+};
 
 pub struct Input {
     pub tokens: Vec<SyntaxKind>,

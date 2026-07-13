@@ -1,4 +1,6 @@
-use crate::{components::language::syntax::SyntaxKind, processes::lexing::lexer::Lexer};
+use crate::{
+    components::language::syntax::syntax_kind::SyntaxKind, processes::lexing::lexer::Lexer,
+};
 
 pub struct LexedStr<'src> {
     pub text: &'src str,

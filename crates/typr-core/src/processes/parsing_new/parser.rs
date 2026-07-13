@@ -1,4 +1,6 @@
-use crate::{components::language::syntax::SyntaxKind, processes::lexing::input::Input};
+use crate::{
+    components::language::syntax::syntax_kind::SyntaxKind, processes::lexing::input::Input,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Event {
@@ -64,6 +66,15 @@ impl<'src> Parser<'src> {
         });
         Marker { pos: event_pos }
     }
+
+    pub fn expect(&mut self, kind: SyntaxKind) -> bool {
+        if self.eat(kind) {
+            true
+        } else {
+            self.error(format!("Expected {:?}", kind));
+            false
+        }
+    }
 }
 
 pub struct Marker {
@@ -71,7 +82,7 @@ pub struct Marker {
 }
 
 impl Marker {
-    pub fn complete(self, parser: &mut Parser, kind: SyntaxKind) {
+    pub fn complete(self, parser: &mut Parser, kind: SyntaxKind) -> CompletedMarker {
         match &mut parser.events[self.pos] {
             Event::Start { kind: slot } => {
                 *slot = kind;
@@ -79,5 +90,22 @@ impl Marker {
             _ => unreachable!(),
         }
         parser.events.push(Event::Finish);
+        CompletedMarker { pos: self.pos }
+    }
+}
+
+pub struct CompletedMarker {
+    pos: usize,
+}
+
+impl CompletedMarker {
+    pub fn precede(&self, parser: &mut Parser) -> Marker {
+        parser.events.insert(
+            self.pos,
+            Event::Start {
+                kind: SyntaxKind::ERROR,
+            },
+        );
+        Marker { pos: self.pos }
     }
 }

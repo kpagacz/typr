@@ -1,7 +1,7 @@
 use rowan::{GreenNode, GreenNodeBuilder};
 
 use crate::{
-    components::language::syntax::SyntaxKind,
+    components::language::syntax::syntax_kind::SyntaxKind,
     processes::{lexing::lexed_str::LexedStr, parsing_new::parser::Event},
 };
 
