@@ -3,6 +3,8 @@ use crate::{
     processes::parsing_new::parser::{CompletedMarker, Parser},
 };
 
+/// Parses expressions using Pratt precedence climbing
+/// algorithm.
 pub fn parse_expr(p: &mut Parser) {
     expr_bp(p, 0);
 }
@@ -35,7 +37,7 @@ fn expr_bp(p: &mut Parser, min_bp: u8) {
     }
 }
 
-/// Parses the base elements (Literals, Variables, Prefix operators)
+/// Parses the base elements (Literals, Variables)
 fn parse_lhs(p: &mut Parser) -> Option<CompletedMarker> {
     match p.current() {
         SyntaxKind::NUMBER
