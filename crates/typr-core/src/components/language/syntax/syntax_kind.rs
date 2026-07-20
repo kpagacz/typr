@@ -152,6 +152,7 @@ pub enum SyntaxKind {
     LET_STMT,
     EXPR_STMT,
     BLOCK_EXPR,
+    INDEX_EXPR,
 }
 
 impl SyntaxKind {

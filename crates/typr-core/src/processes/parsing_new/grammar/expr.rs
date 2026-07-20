@@ -3,8 +3,7 @@ use crate::{
     processes::parsing_new::parser::{CompletedMarker, Parser},
 };
 
-/// Parses expressions using Pratt precedence climbing
-/// algorithm.
+/// Parses expressions using Pratt precedence climbing algorithm.
 pub fn parse_expr(p: &mut Parser) {
     expr_bp(p, 0);
 }
@@ -39,7 +38,20 @@ fn expr_bp(p: &mut Parser, min_bp: u8) {
 
 /// Parses the base elements (Literals, Variables)
 fn parse_lhs(p: &mut Parser) -> Option<CompletedMarker> {
-    match p.current() {
+    let mut lhs = match p.current() {
+        SyntaxKind::MINUS | SyntaxKind::EXCLAMATION => {
+            let m = p.start();
+            p.bump();
+            expr_bp(p, 255);
+            m.complete(p, SyntaxKind::PREFIX_EXPR)
+        }
+        SyntaxKind::L_PAREN => {
+            let m = p.start();
+            p.bump();
+            expr_bp(p, 0);
+            p.expect(SyntaxKind::R_PAREN);
+            m.complete(p, SyntaxKind::PAREN_EXPR)
+        }
         SyntaxKind::NUMBER
         | SyntaxKind::STRING
         | SyntaxKind::TRUE_KW
@@ -49,18 +61,49 @@ fn parse_lhs(p: &mut Parser) -> Option<CompletedMarker> {
         | SyntaxKind::DOT3 => {
             let m = p.start();
             p.bump();
-            Some(m.complete(p, SyntaxKind::LITERAL_EXPR))
+            m.complete(p, SyntaxKind::LITERAL_EXPR)
         }
         SyntaxKind::IDENT => {
             let m = p.start();
             p.bump();
-            Some(m.complete(p, SyntaxKind::IDENT_EXPR))
+            m.complete(p, SyntaxKind::IDENT_EXPR)
         }
         _ => {
             p.error("Expected an expression");
-            None
+            return None;
+        }
+    };
+
+    // The postfix loop - similar to rust analyzer
+    // Function calls and indexing are parsed here
+    loop {
+        match p.current() {
+            // function call: `foo(...)`
+            SyntaxKind::L_PAREN => {
+                let m = lhs.precede(p);
+                p.bump();
+                while !p.at(SyntaxKind::R_PAREN) && !p.at(SyntaxKind::EOF) {
+                    parse_expr(p);
+                    if !p.eat(SyntaxKind::COMMA) {
+                        break;
+                    }
+                }
+                p.expect(SyntaxKind::R_PAREN);
+                lhs = m.complete(p, SyntaxKind::CALL_EXPR);
+            }
+            // Array indexing
+            SyntaxKind::L_BRACK => {
+                let m = lhs.precede(p);
+                p.bump();
+                parse_expr(p);
+                p.expect(SyntaxKind::R_BRACK);
+                lhs = m.complete(p, SyntaxKind::INDEX_EXPR);
+            }
+            _ => break,
         }
     }
+
+    Some(lhs)
 }
 
 fn infix_binding_power(kind: SyntaxKind) -> Option<(u8, u8)> {
