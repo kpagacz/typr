@@ -2,7 +2,7 @@ use crate::components::error_message::help_data::HelpData;
 use crate::components::language::operators::Op;
 use crate::components::language::syntax::syntax_kind::SyntaxKind;
 use crate::components::language::Lang;
-use crate::processes::parsing_new::ast::{AstNode, BinaryExpr, Expr, LiteralExpr};
+use crate::processes::parsing_new::ast::{AstNode, BinaryExpr, Expr, LiteralExpr, ParenExpr};
 
 pub trait ToLegacy {
     fn to_legacy(&self, file_name: &str) -> Lang;
@@ -13,6 +13,31 @@ impl ToLegacy for Expr {
         match self {
             Expr::Literal(lit) => lit.to_legacy(file_name),
             Expr::Binary(bin) => bin.to_legacy(file_name),
+            Expr::Paren(paren) => paren.to_legacy(file_name),
+        }
+    }
+}
+
+impl ToLegacy for ParenExpr {
+    fn to_legacy(&self, file_name: &str) -> Lang {
+        let inner = self
+            .inner_expr()
+            .expect("ParenExpr missing inner expression")
+            .to_legacy(file_name);
+
+        // Find the offset of the inner expression, not the parenthesis itself (which matches old parser behavior)
+        let inner_offset = self
+            .inner_expr()
+            .unwrap()
+            .syntax()
+            .text_range()
+            .start()
+            .into();
+        let help_data = HelpData::new(inner_offset, file_name.to_string());
+
+        Lang::Scope {
+            body: vec![inner],
+            help_data,
         }
     }
 }

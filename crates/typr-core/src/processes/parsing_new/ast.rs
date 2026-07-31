@@ -67,20 +67,47 @@ impl BinaryExpr {
     }
 }
 
+pub struct ParenExpr(pub SyntaxNode);
+
+impl AstNode for ParenExpr {
+    fn can_cast(kind: SyntaxKind) -> bool {
+        kind == SyntaxKind::PAREN_EXPR
+    }
+    fn cast(node: SyntaxNode) -> Option<Self> {
+        if Self::can_cast(node.kind()) {
+            Some(Self(node))
+        } else {
+            None
+        }
+    }
+    fn syntax(&self) -> &SyntaxNode {
+        &self.0
+    }
+}
+
+impl ParenExpr {
+    pub fn inner_expr(&self) -> Option<Expr> {
+        self.syntax().children().find_map(Expr::cast)
+    }
+}
+
 pub enum Expr {
     Literal(LiteralExpr),
     Binary(BinaryExpr),
+    Paren(ParenExpr),
 }
 
 impl AstNode for Expr {
     fn can_cast(kind: SyntaxKind) -> bool {
-        LiteralExpr::can_cast(kind) || BinaryExpr::can_cast(kind)
+        LiteralExpr::can_cast(kind) || BinaryExpr::can_cast(kind) || ParenExpr::can_cast(kind)
     }
     fn cast(node: SyntaxNode) -> Option<Self> {
         if LiteralExpr::can_cast(node.kind()) {
             Some(Expr::Literal(LiteralExpr(node)))
         } else if BinaryExpr::can_cast(node.kind()) {
             Some(Expr::Binary(BinaryExpr(node)))
+        } else if ParenExpr::can_cast(node.kind()) {
+            Some(Expr::Paren(ParenExpr(node)))
         } else {
             None
         }
@@ -89,6 +116,7 @@ impl AstNode for Expr {
         match self {
             Expr::Literal(it) => it.syntax(),
             Expr::Binary(it) => it.syntax(),
+            Expr::Paren(it) => it.syntax(),
         }
     }
 }
