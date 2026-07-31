@@ -33,7 +33,7 @@ fn verify_parser_parity(code: &str, file_name: &str) {
 
     assert_eq!(
         old_ast, new_ast,
-        "\n\n🚨 PARSER MISMATCH in file: {} 🚨\n\nOld AST:\n{:#?}\n\nNew AST:\n{:#?}\n\n",
+        "\n\n PARSER MISMATCH in file: {} \n\nOld AST:\n{:#?}\n\nNew AST:\n{:#?}\n\n",
         file_name, old_ast, new_ast
     );
 }
