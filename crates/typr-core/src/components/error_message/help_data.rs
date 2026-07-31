@@ -41,6 +41,10 @@ pub struct HelpData {
 }
 
 impl HelpData {
+    pub fn new(offset: usize, file_name: String) -> Self {
+        HelpData { offset, file_name }
+    }
+
     pub fn get_offset(&self) -> usize {
         self.offset
     }

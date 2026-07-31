@@ -22,7 +22,8 @@ pub fn build_tree(lexed: &LexedStr, events: Vec<Event>) -> GreenNode {
         }
     };
 
-    for event in events {
+    let mut events = events.into_iter().peekable();
+    while let Some(event) = events.next() {
         match event {
             Event::Start { kind } => {
                 builder.start_node(rowan::SyntaxKind(kind as u16));
@@ -34,11 +35,15 @@ pub fn build_tree(lexed: &LexedStr, events: Vec<Event>) -> GreenNode {
                 builder.token(rowan::SyntaxKind(kind as u16), text);
                 lex_idx += 1;
             }
-            Event::Finish => builder.finish_node(),
+            Event::Finish => {
+                if events.peek().is_none() {
+                    eat_trivia(&mut builder, &mut lex_idx);
+                }
+                builder.finish_node();
+            }
             Event::Error(_) => todo!(),
         }
     }
 
-    eat_trivia(&mut builder, &mut lex_idx);
     builder.finish()
 }
